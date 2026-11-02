@@ -1,0 +1,1 @@
+{"name":"forge","owner":{"name":"lbmtcu-glitch"},"plugins":[{"name":"forge-guard","source":"./plugins/forge-guard","description":"Enforces the ten forge-core rules in code for every forge."}]}
