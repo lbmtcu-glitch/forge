@@ -1,0 +1,1 @@
+{ "name": "forge-guard", "version": "1.0.0", "license": "MIT", "description": "Enforces the 10 forge-core rules in code: blocks dead links, blocks sends without a draft, and makes Claude redo replies that offer instead of doing." }
