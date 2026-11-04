@@ -13,10 +13,14 @@ const RULES = `FORGE GUARD — the 10 rules, enforced by code this session:
 10 FIX BY REPLACING: a miss rewrites the failed rule or adds a check; never a new rule beside it.
 Replies that break 2 or 4 are sent back automatically.`
 
-const DEAD_LINK = /(file:\/\/\/|computer:\/\/)/i
+// 1.1.0: only a real link (scheme followed by a path), not a prose mention of the scheme name
+const DEAD_LINK = /(file:\/\/\/[A-Za-z0-9~%._\-\/]|computer:\/\/[A-Za-z0-9~%._\-\/])/i
+// 1.1.0: his own word "send" is the order; no draft step
+const SEND_ORDER = /\bsend\b/i
 const OFFERS = /\b(want me to|if you want|i can also|let me know|i haven'?t read|i'll do that next|shall i|would you like me to)\b/i
 
 let draftedThisSession = false
+let sendOrdered = false
 let redoneTurn: string | undefined
 
 export const register: Register = on => {
@@ -25,11 +29,16 @@ export const register: Register = on => {
     return { sections: [...r.sections, { id: 'forge-guard:rules', text: RULES, scope: 'session' as const }] }
   })
 
+  on('prompt.submit', async ($, e, next) => {
+    sendOrdered = SEND_ORDER.test(String((e as { text?: string }).text ?? ''))
+    return next(e)
+  })
+
   on('tool.call', async ($, e, next) => {
     const tool = String((e as { tool?: string }).tool ?? '')
     const body = JSON.stringify(e)
     if (/Gmail__create_draft|Gmail__update_draft/.test(tool)) draftedThisSession = true
-    if (/Gmail__send_message|Gmail__reply|Gmail__forward/.test(tool) && !draftedThisSession)
+    if (/Gmail__send_message|Gmail__reply|Gmail__forward/.test(tool) && !draftedThisSession && !sendOrdered)
       return { deny: 'forge-guard rule 5: make the Gmail draft and show it first; send only on his order.' }
     if (!/^(Read|Grep|Glob|Bash)$/.test(tool) && DEAD_LINK.test(body))
       return { deny: 'forge-guard rule 4: file:/// and computer:// do not click. Use an https link or a file card.' }
